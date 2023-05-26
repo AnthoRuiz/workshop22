@@ -1,9 +1,12 @@
-const newPartyForm = document.querySelector("#new-party-form");
+const partyDetailContainer = document.querySelector("#party-detail-container");
 const partyContainer = document.querySelector("#party-container");
+const partyForm = document.querySelector("#party-form");
+
 const title = document.querySelector("#title");
+const partyBtn = document.querySelector("#partyBtn");
 
 const PARTIES_API_URL =
-  "http://fsa-async-await.herokuapp.com/api/workshop/parties";
+  "https://fsa-async-await.herokuapp.com/api/workshop/parties";
 const GUESTS_API_URL =
   "http://fsa-async-await.herokuapp.com/api/workshop/guests";
 const RSVPS_API_URL = "http://fsa-async-await.herokuapp.com/api/workshop/rsvps";
@@ -91,12 +94,12 @@ const renderSinglePartyById = async (id) => {
             <button class="btn btn-primary btn-round-2 close-button">Close</button>
         `;
     partyColumn.appendChild(partyElement);
-    newPartyForm.appendChild(partyColumn);
+    partyDetailContainer.appendChild(partyColumn);
 
     // add event listener to close button
     const closeButton = partyElement.querySelector(".close-button");
     closeButton.addEventListener("click", async () => {
-      newPartyForm.style.display = "none";
+      partyDetailContainer.style.display = "none";
       partyContainer.style.display = "block";
       partyElement.remove();
     });
@@ -132,7 +135,7 @@ const renderParties = async (parties) => {
       detailsButton.addEventListener("click", async (event) => {
         const id = event.target.dataset.id;
         partyContainer.style.display = "none";
-        newPartyForm.style.display = "block";
+        partyDetailContainer.style.display = "block";
         renderSinglePartyById(id);
         title.innerHTML = "Parties Detail";
       });
@@ -150,6 +153,89 @@ const renderParties = async (parties) => {
     console.error(error);
   }
 };
+
+const createParty = async (party) => {
+  try {
+    console.log(JSON.stringify(party));
+    const response = await fetch(PARTIES_API_URL, {
+      method: "POST",
+      body: JSON.stringify(party),
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+const renderNewPartyForm = async () => {
+  let formHTML = `
+  <form class="form-style-9">
+    <ul>
+      <li>
+        <input type="text" id="name" class="field-style field-full align-none" placeholder="Name" />
+      </li>
+      <li>
+        <label>Date:</label>
+        <input type="date" id="date" value="2023-01-01" min="1970-01-01" max="2100-12-31" />
+      </li>
+      <li>
+        <input type="text" id="time" class="field-style field-full align-none" placeholder="Time" />
+      </li>
+      <li>
+        <input type="text" id="location" class="field-style field-full align-none" placeholder="Location" />
+      </li>
+      <li>
+        <input type="text" id="description" class="field-style field-full align-none" placeholder="description" />
+      </li>
+      <li>
+        <input type="submit" value="Send Message" />
+      </li>
+    </ul>
+  </form>
+    `;
+  title.innerHTML = "Create Party";
+  partyForm.innerHTML = formHTML;
+};
+
+partyBtn.addEventListener("click", async (e) => {
+  e.preventDefault();
+  partyContainer.style.display = "none";
+  renderNewPartyForm();
+  partyBtn.style.display = "none";
+  partyForm.style.display = "block";
+});
+
+partyForm.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const name = document.getElementById("name").value;
+  const date = document.getElementById("date").value;
+  const time = document.getElementById("time").value;
+  const location = document.getElementById("location").value;
+  const description = document.getElementById("description").value;
+
+  const newParty = {
+    name,
+    date,
+    time,
+    location,
+    description,
+  };
+
+  console.log(test === JSON.stringify(newParty));
+
+  await createParty(newParty);
+
+  const parties = await getAllParties();
+  renderParties(parties);
+
+  partyContainer.style.display = "block";
+  partyBtn.style.display = "block";
+  partyForm.style.display = "none";
+});
 
 // init function
 const init = async () => {
